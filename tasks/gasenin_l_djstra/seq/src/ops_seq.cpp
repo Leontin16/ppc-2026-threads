@@ -23,6 +23,9 @@ bool GaseninLDjstraSEQ::PreProcessingImpl() {
 
 bool GaseninLDjstraSEQ::RunImpl() {
   InType n = GetInput();
+  if (n == 0) {
+    return false;
+  }
   const InType INF = std::numeric_limits<InType>::max();
   std::vector<InType> dist(n, INF);
   std::vector<bool> visited(n, false);
