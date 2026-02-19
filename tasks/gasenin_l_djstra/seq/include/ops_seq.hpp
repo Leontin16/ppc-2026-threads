@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "gasenin_l_djstra/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,8 +19,8 @@ class GaseninLDjstraSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  InType FindMinDist(const std::vector<InType> &dist, const std::vector<bool> &visited);
-  void RelaxEdges(InType u, std::vector<InType> &dist, const std::vector<bool> &visited);
+  static InType FindMinDist(const std::vector<InType> &dist, const std::vector<bool> &visited);
+  static void RelaxEdges(InType u, std::vector<InType> &dist, const std::vector<bool> &visited);
 };
 
 }  // namespace gasenin_l_djstra

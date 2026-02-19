@@ -21,8 +21,9 @@ bool GaseninLDjstraSEQ::PreProcessingImpl() {
   return true;
 }
 
+// static
 InType GaseninLDjstraSEQ::FindMinDist(const std::vector<InType> &dist, const std::vector<bool> &visited) {
-  InType n = static_cast<InType>(dist.size());
+  auto n = static_cast<InType>(dist.size());
   InType min_dist = std::numeric_limits<InType>::max();
   InType u = -1;
   for (InType i = 0; i < n; ++i) {
@@ -34,8 +35,9 @@ InType GaseninLDjstraSEQ::FindMinDist(const std::vector<InType> &dist, const std
   return u;
 }
 
+// static
 void GaseninLDjstraSEQ::RelaxEdges(InType u, std::vector<InType> &dist, const std::vector<bool> &visited) {
-  InType n = static_cast<InType>(dist.size());
+  auto n = static_cast<InType>(dist.size());
   for (InType vert = 0; vert < n; ++vert) {
     if (!visited[vert] && u != vert) {
       InType weight = (u > vert) ? (u - vert) : (vert - u);
@@ -52,8 +54,8 @@ bool GaseninLDjstraSEQ::RunImpl() {
     return false;
   }
 
-  const InType kInf = std::numeric_limits<InType>::max();
-  std::vector<InType> dist(n, kInf);
+  const InType k_inf = std::numeric_limits<InType>::max();
+  std::vector<InType> dist(n, k_inf);
   std::vector<bool> visited(n, false);
   dist[0] = 0;
 

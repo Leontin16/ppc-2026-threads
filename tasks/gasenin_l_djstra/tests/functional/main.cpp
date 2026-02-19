@@ -3,13 +3,11 @@
 
 /*
 #include <algorithm>
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <numeric>
 #include <stdexcept>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 */
@@ -22,7 +20,7 @@
 // #include "gasenin_l_djstra/stl/include/ops_stl.hpp"
 // #include "gasenin_l_djstra/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
-// #include "util/include/util.hpp"
+#include "util/include/util.hpp"
 
 namespace gasenin_l_djstra {
 
