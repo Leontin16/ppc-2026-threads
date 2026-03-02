@@ -6,6 +6,8 @@
 #include <limits>
 #include <vector>
 
+#include "gasenin_l_djstra_omp/common/include/common.hpp"
+
 namespace gasenin_l_djstra_omp {
 
 GaseninLDjstraOMP::GaseninLDjstraOMP(const InType &in) {
