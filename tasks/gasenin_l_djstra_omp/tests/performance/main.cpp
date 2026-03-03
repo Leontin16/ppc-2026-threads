@@ -4,7 +4,7 @@
 #include "gasenin_l_djstra_omp/omp/include/ops_omp.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace gasenin_l_djstra_omp {
+namespace gasenin_l_djstra {
 
 class GaseninLDjstraOmpPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{};
@@ -37,4 +37,4 @@ const auto kPerfTestName = GaseninLDjstraOmpPerfTests::CustomPerfTestName;
 INSTANTIATE_TEST_SUITE_P(DjkstraOmpPerf, GaseninLDjstraOmpPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
-}  // namespace gasenin_l_djstra_omp
+}  // namespace gasenin_l_djstra

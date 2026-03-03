@@ -10,7 +10,7 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace gasenin_l_djstra_omp {
+namespace gasenin_l_djstra {
 
 class GaseninLDjstraOmpFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -56,4 +56,4 @@ INSTANTIATE_TEST_SUITE_P(DijkstraOmpTests, GaseninLDjstraOmpFuncTests, kGtestVal
 
 }  // namespace
 
-}  // namespace gasenin_l_djstra_omp
+}  // namespace gasenin_l_djstra

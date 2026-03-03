@@ -5,7 +5,7 @@
 #include "gasenin_l_djstra_omp/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace gasenin_l_djstra_omp {
+namespace gasenin_l_djstra {
 
 class GaseninLDjstraOMP : public BaseTask {
  public:
@@ -24,4 +24,4 @@ class GaseninLDjstraOMP : public BaseTask {
   std::vector<char> visited_;
 };
 
-}  // namespace gasenin_l_djstra_omp
+}  // namespace gasenin_l_djstra

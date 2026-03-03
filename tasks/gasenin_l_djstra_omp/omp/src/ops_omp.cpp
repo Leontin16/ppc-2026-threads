@@ -10,7 +10,7 @@
 
 #include "gasenin_l_djstra_omp/common/include/common.hpp"
 
-namespace gasenin_l_djstra_omp {
+namespace gasenin_l_djstra {
 
 namespace {
 
@@ -152,4 +152,4 @@ bool GaseninLDjstraOMP::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace gasenin_l_djstra_omp
+}  // namespace gasenin_l_djstra
