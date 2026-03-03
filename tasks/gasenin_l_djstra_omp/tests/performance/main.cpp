@@ -6,7 +6,7 @@
 
 namespace gasenin_l_djstra_omp {
 
-class DjkstraPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class GaseninLDjstraOmpPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{};
   OutType expected_output_{};
 
@@ -24,7 +24,7 @@ class DjkstraPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   }
 };
 
-TEST_P(DjkstraPerfTests, RunPerfModes) {
+TEST_P(GaseninLDjstraOmpPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -32,9 +32,9 @@ namespace {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GaseninLDjstraOMP>(PPC_SETTINGS_gasenin_l_djstra_omp);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-const auto kPerfTestName = DjkstraPerfTests::CustomPerfTestName;
+const auto kPerfTestName = GaseninLDjstraOmpPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(DjkstraOmpPerf, DjkstraPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(DjkstraOmpPerf, GaseninLDjstraOmpPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 }  // namespace gasenin_l_djstra_omp
