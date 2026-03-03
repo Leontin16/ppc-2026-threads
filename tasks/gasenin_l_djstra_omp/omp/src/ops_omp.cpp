@@ -63,8 +63,8 @@ bool GaseninLDjstraOMP::RunImpl() {
 
 #pragma omp for nowait
       for (int index = 0; index < n; ++index) {
-        if (visited_[index] == 0 && dist_[index] < thread_min) {
-          thread_min = dist_[index];
+        if (visited[index] == 0 && dist[index] < thread_min) {
+          thread_min = dist[index];
           thread_vertex = index;
         }
       }
@@ -87,7 +87,7 @@ bool GaseninLDjstraOMP::RunImpl() {
         }
 
         if (global_vertex != -1 && global_min != inf) {
-          visited_[global_vertex] = 1;
+          visited[global_vertex] = 1;
         }
       }
 
@@ -99,12 +99,12 @@ bool GaseninLDjstraOMP::RunImpl() {
 
 #pragma omp for
       for (int vertex = 0; vertex < n; ++vertex) {
-        if (visited_[vertex] == 0 && vertex != global_vertex) {
+        if (visited[vertex] == 0 && vertex != global_vertex) {
           const InType weight = std::abs(global_vertex - vertex);
 
-          if (dist_[global_vertex] != inf) {
-            const InType new_dist = dist_[global_vertex] + weight;
-            dist_[vertex] = std::min(dist_[vertex], new_dist);
+          if (dist[global_vertex] != inf) {
+            const InType new_dist = dist[global_vertex] + weight;
+            dist[vertex] = std::min(dist[vertex], new_dist);
           }
         }
       }
@@ -115,8 +115,8 @@ bool GaseninLDjstraOMP::RunImpl() {
 
 #pragma omp parallel for reduction(+ : total_sum) default(none) shared(n, dist, inf)
   for (int index = 0; index < n; ++index) {
-    if (dist_[index] != inf) {
-      total_sum += dist_[index];
+    if (dist[index] != inf) {
+      total_sum += dist[index];
     }
   }
 
