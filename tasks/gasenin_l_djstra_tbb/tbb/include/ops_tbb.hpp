@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include "gasenin_l_djstra_tbb/common/include/common.hpp"
@@ -24,7 +25,7 @@ class GaseninLDjstraTBB : public BaseTask {
   int vertex_count_ = 0;
   std::vector<std::vector<std::pair<int, int>>> adj_;
   std::vector<int> dist_;
-  static constexpr int INF = std::numeric_limits<int>::max() / 2;
+  static constexpr int kInf = std::numeric_limits<int>::max() / 2;
 };
 
 }  // namespace gasenin_l_djstra

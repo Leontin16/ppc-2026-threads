@@ -2,7 +2,8 @@
 
 #include <tbb/tbb.h>
 
-#include <limits>
+#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "gasenin_l_djstra_tbb/common/include/common.hpp"
@@ -25,7 +26,7 @@ bool GaseninLDjstraTBB::PreProcessingImpl() {
   for (int i = 0; i < vertex_count_ - 1; ++i) {
     adj_[i].emplace_back(i + 1, 1);
   }
-  dist_.assign(vertex_count_, INF);
+  dist_.assign(vertex_count_, kInf);
   dist_[0] = 0;
   return true;
 }
@@ -35,26 +36,24 @@ bool GaseninLDjstraTBB::RunImpl() {
 
   for (int i = 0; i < vertex_count_; ++i) {
     int u = -1;
-    int min_dist = INF;
+    int min_dist = kInf;
     for (int j = 0; j < vertex_count_; ++j) {
       if (!visited[j] && dist_[j] < min_dist) {
         min_dist = dist_[j];
         u = j;
       }
     }
-    if (u == -1 || dist_[u] == INF) {
+    if (u == -1 || dist_[u] == kInf) {
       break;
     }
     visited[u] = true;
 
     const auto &neighbors = adj_[u];
-    tbb::parallel_for(size_t(0), neighbors.size(), [&](size_t idx) {
+    tbb::parallel_for(static_cast<size_t>(0), neighbors.size(), [&](size_t idx) {
       int v = neighbors[idx].first;
       int w = neighbors[idx].second;
       int new_dist = dist_[u] + w;
-      if (new_dist < dist_[v]) {
-        dist_[v] = new_dist;
-      }
+      dist_[v] = std::min(new_dist, dist_[v]);
     });
   }
   return true;
@@ -63,7 +62,7 @@ bool GaseninLDjstraTBB::RunImpl() {
 bool GaseninLDjstraTBB::PostProcessingImpl() {
   int sum = 0;
   for (int d : dist_) {
-    if (d < INF) {
+    if (d < kInf) {
       sum += d;
     }
   }
