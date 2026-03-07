@@ -1,16 +1,9 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "gasenin_l_djstra_tbb/common/include/common.hpp"
 #include "gasenin_l_djstra_tbb/tbb/include/ops_tbb.hpp"
@@ -19,7 +12,7 @@
 
 namespace gasenin_l_djstra {
 
-class GaseninLRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class GaseninLDjstraTbbFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -47,7 +40,7 @@ class GaseninLRunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
 
 namespace {
 
-TEST_P(GaseninLRunFuncTestsThreads, DijkstraFromParams) {
+TEST_P(GaseninLDjstraTbbFuncTests, DijkstraFromParams) {
   ExecuteTest(GetParam());
 }
 
@@ -57,9 +50,9 @@ const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<GaseninLDjstraTBB, InType>(kTestParam, PPC_SETTINGS_gasenin_l_djstra_tbb));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-const auto kPerfTestName = GaseninLRunFuncTestsThreads::PrintFuncTestName<GaseninLRunFuncTestsThreads>;
+const auto kPerfTestName = GaseninLDjstraTbbFuncTests::PrintFuncTestName<GaseninLDjstraTbbFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(DijkstraTbbTests, GaseninLRunFuncTestsThreads, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(DijkstraTbbTests, GaseninLDjstraTbbFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
