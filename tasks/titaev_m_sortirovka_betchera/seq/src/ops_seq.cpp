@@ -12,30 +12,33 @@ namespace titaev_m_sortirovka_betchera {
 namespace {
 
 uint64_t DoubleToOrderedUint(double value) {
-  uint64_t x;
+  uint64_t x = 0;
   std::memcpy(&x, &value, sizeof(double));
 
-  if (x & (1ULL << 63)) {
-    x = ~x;  // отрицательные
+  constexpr uint64_t kSignMask = (1ULL << 63);
+
+  if ((x & kSignMask) != 0ULL) {
+    x = ~x;
   } else {
-    x ^= (1ULL << 63);  // положительные
+    x ^= kSignMask;
   }
 
   return x;
 }
 
 double OrderedUintToDouble(uint64_t x) {
-  if (x & (1ULL << 63)) {
-    x ^= (1ULL << 63);
+  constexpr uint64_t kSignMask = (1ULL << 63);
+
+  if ((x & kSignMask) != 0ULL) {
+    x ^= kSignMask;
   } else {
     x = ~x;
   }
 
-  double result;
+  double result = 0.0;
   std::memcpy(&result, &x, sizeof(double));
   return result;
 }
-
 }  // namespace
 
 TitaevSortirovkaBetcheraSEQ::TitaevSortirovkaBetcheraSEQ(const InType &in) {
