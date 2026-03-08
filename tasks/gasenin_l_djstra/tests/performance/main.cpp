@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include "gasenin_l_djstra/common/include/common.hpp"
-#include "gasenin_l_djstra/seq/include/ops_seq.hpp"
 #include "gasenin_l_djstra/omp/include/ops_omp.hpp"
+#include "gasenin_l_djstra/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace gasenin_l_djstra {
