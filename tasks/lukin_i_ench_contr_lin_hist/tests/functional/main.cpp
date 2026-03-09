@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstddef>
 #include <string>
+#include <tuple>
 
 #include "lukin_i_ench_contr_lin_hist/common/include/common.hpp"
 #include "lukin_i_ench_contr_lin_hist/omp/include/ops_omp.hpp"

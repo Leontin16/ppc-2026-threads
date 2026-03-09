@@ -30,7 +30,8 @@ bool LukinITestTaskOMP::RunImpl() {
 
   const int size = static_cast<int>(input.size());
 
-#pragma omp parallel for reduction(min : min) reduction(max : max)  //(max : max) - оператор, потом указание переменной
+#pragma omp parallel for default(none) shared(input, size) reduction(min : min) \
+    reduction(max : max)  //(max : max) - оператор, потом указание переменной
   for (int i = 0; i < size; i++) {
     min = std::min(min, input[i]);
     max = std::max(max, input[i]);
@@ -44,7 +45,7 @@ bool LukinITestTaskOMP::RunImpl() {
 
   float scale = 255.0F / static_cast<float>(max - min);
 
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(input, output, min, size, scale)
   for (int i = 0; i < size; i++) {  // Линейное растяжение
     output[i] = static_cast<unsigned char>(static_cast<float>(input[i] - min) * scale);
   }
