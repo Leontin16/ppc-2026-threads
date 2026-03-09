@@ -1,5 +1,7 @@
 #include "redkina_a_integral_simpson_seq/omp/include/ops_omp.hpp"
 
+#include <omp.h>
+
 #include <cmath>
 #include <cstddef>
 #include <functional>
@@ -11,6 +13,18 @@
 namespace redkina_a_integral_simpson_seq {
 
 namespace {
+
+// Однократная инициализация пула потоков OpenMP
+static void InitializeOpenMP() {
+  static bool initialized = false;
+  if (!initialized) {
+#pragma omp parallel
+    {
+      // Пустая параллельная область для создания пула потоков
+    }
+    initialized = true;
+  }
+}
 
 int GetSimpsonWeight(int idx, int max_idx) {
   if (idx == 0 || idx == max_idx) {
@@ -92,6 +106,8 @@ double ProcessSubspace(const std::vector<double> &a, const std::vector<double> &
 }  // namespace
 
 RedkinaAIntegralSimpsonOMP::RedkinaAIntegralSimpsonOMP(const InType &in) {
+  // Инициализируем OpenMP при создании первой задачи
+  InitializeOpenMP();
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
