@@ -1,4 +1,3 @@
-// redkina_a_integral_simpson_seq/omp/src/ops_omp.cpp
 #include "redkina_a_integral_simpson_seq/omp/include/ops_omp.hpp"
 
 #include <omp.h>
@@ -50,13 +49,11 @@ bool RedkinaAIntegralSimpsonOMP::PreProcessingImpl() {
 bool RedkinaAIntegralSimpsonOMP::RunImpl() {
   size_t dim = a_.size();
 
-  // Локальные копии, чтобы безопасно использовать их в параллельной области
   const std::vector<double> a_local = a_;
   const std::vector<double> b_local = b_;
   const std::vector<int> n_local = n_;
   const auto func_local = func_;
 
-  // Шаг интегрирования по каждому измерению
   std::vector<double> h(dim);
   double h_prod = 1.0;
   for (size_t i = 0; i < dim; ++i) {
@@ -64,7 +61,6 @@ bool RedkinaAIntegralSimpsonOMP::RunImpl() {
     h_prod *= h[i];
   }
 
-  // Множители для линеаризации индексов (число узлов = n[i] + 1)
   std::vector<int> strides(dim);
   strides[dim - 1] = 1;
   for (int i = static_cast<int>(dim) - 2; i >= 0; --i) {
@@ -108,7 +104,6 @@ bool RedkinaAIntegralSimpsonOMP::RunImpl() {
     }
   }
 
-  // Знаменатель 3^dim
   double denominator = 1.0;
   for (size_t i = 0; i < dim; ++i) {
     denominator *= 3.0;

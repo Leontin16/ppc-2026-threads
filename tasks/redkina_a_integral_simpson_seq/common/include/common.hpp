@@ -8,7 +8,7 @@
 
 namespace redkina_a_integral_simpson_seq {
 
-struct InputData {
+struct alignas(double) InputData {
   std::function<double(const std::vector<double> &)> func;
   std::vector<double> a;
   std::vector<double> b;
