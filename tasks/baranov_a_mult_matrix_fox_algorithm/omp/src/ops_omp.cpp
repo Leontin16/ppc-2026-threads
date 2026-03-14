@@ -37,20 +37,27 @@ BaranovAMultMatrixFoxAlgorithmOMP::BaranovAMultMatrixFoxAlgorithmOMP(
 }
 
 bool BaranovAMultMatrixFoxAlgorithmOMP::ValidationImpl() {
-  const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
+  const auto &input = GetInput();
+  size_t matrix_size = std::get<0>(input);
+  const auto &matrix_a = std::get<1>(input);
+  const auto &matrix_b = std::get<2>(input);
 
   return matrix_size > 0 && matrix_a.size() == matrix_size * matrix_size &&
          matrix_b.size() == matrix_size * matrix_size;
 }
 
 bool BaranovAMultMatrixFoxAlgorithmOMP::PreProcessingImpl() {
-  const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
+  const auto &input = GetInput();
+  size_t matrix_size = std::get<0>(input);
+
   GetOutput() = std::vector<double>(matrix_size * matrix_size, 0.0);
   return true;
 }
 
 void BaranovAMultMatrixFoxAlgorithmOMP::StandardMultiplication(size_t n) {
-  const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
+  const auto &input = GetInput();
+  const auto &matrix_a = std::get<1>(input);
+  const auto &matrix_b = std::get<2>(input);
   auto &output = GetOutput();
 
 #pragma omp parallel for collapse(2)
@@ -66,7 +73,9 @@ void BaranovAMultMatrixFoxAlgorithmOMP::StandardMultiplication(size_t n) {
 }
 
 void BaranovAMultMatrixFoxAlgorithmOMP::FoxBlockMultiplication(size_t n, size_t block_size) {
-  const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
+  const auto &input = GetInput();
+  const auto &matrix_a = std::get<1>(input);
+  const auto &matrix_b = std::get<2>(input);
   auto &output = GetOutput();
 
   size_t num_blocks = (n + block_size - 1) / block_size;
@@ -96,8 +105,8 @@ void BaranovAMultMatrixFoxAlgorithmOMP::FoxBlockMultiplication(size_t n, size_t 
 }
 
 bool BaranovAMultMatrixFoxAlgorithmOMP::RunImpl() {
-  const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
-  size_t n = matrix_size;
+  const auto &input = GetInput();
+  size_t n = std::get<0>(input);
 
   int num_threads = omp_get_max_threads();
   size_t block_size = 64;
