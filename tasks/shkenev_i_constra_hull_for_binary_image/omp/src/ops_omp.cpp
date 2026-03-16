@@ -95,9 +95,7 @@ size_t ShkenevIConstrHullOMP::Index(int x, int y, int width) {
 void ShkenevIConstrHullOMP::ThresholdImage() {
   auto &pixels = work_.pixels;
 
-#pragma omp parallel for default(none) shared(pixels) num_threads(ppc::util::GetNumThreads())
-  for (std::size_t i = 0; i < pixels.size(); ++i) {
-    auto &pixel = pixels[i];
+  for (auto &pixel : pixels) {
     pixel = IsForeground(pixel) ? static_cast<uint8_t>(255) : static_cast<uint8_t>(0);
   }
 }
