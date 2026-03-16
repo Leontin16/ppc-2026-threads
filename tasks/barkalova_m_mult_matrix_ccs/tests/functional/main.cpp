@@ -248,13 +248,6 @@ TEST_P(BarkalovaMatrixMultiplyFixedTest, MatrixMultiplyFixedTest) {
 const std::array<TestType, 6> kTestParam = {std::make_tuple(1, ""), std::make_tuple(2, ""), std::make_tuple(3, ""),
                                             std::make_tuple(4, ""), std::make_tuple(5, ""), std::make_tuple(6, "")};
 
-// const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSEQ, InType>(
-// kFixedTestParams, PPC_SETTINGS_barkalova_m_mult_matrix_ccs));
-
-// const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSEQ, InType>(
-//   kFixedTestParams, PPC_SETTINGS_barkalova_m_mult_matrix_ccs), ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsOMP,
-//   InType>(kFixedTestParams, PPC_SETTINGS_barkalova_m_mult_matrix_ccs));
-
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsSEQ, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs),
     ppc::util::AddFuncTask<BarkalovaMMultMatrixCcsOMP, InType>(kTestParam, PPC_SETTINGS_barkalova_m_mult_matrix_ccs));
