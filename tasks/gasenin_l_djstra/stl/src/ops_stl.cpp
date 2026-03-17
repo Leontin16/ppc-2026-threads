@@ -14,8 +14,8 @@ namespace gasenin_l_djstra {
 
 namespace {
 
-InType FindMinVertexSTL(const InType n, const InType inf, const std::vector<InType> &dist,
-                        std::vector<char> &visited, const int num_threads) {
+InType FindMinVertexSTL(const InType n, const InType inf, const std::vector<InType> &dist, std::vector<char> &visited,
+                        const int num_threads) {
   std::vector<InType> local_min(num_threads, inf);
   std::vector<InType> local_vertex(num_threads, -1);
 
@@ -87,8 +87,7 @@ void RelaxEdgesSTL(const InType n, const InType inf, const InType u, std::vector
   }
 }
 
-int64_t CalculateTotalSumSTL(const InType n, const InType inf, const std::vector<InType> &dist,
-                              const int num_threads) {
+int64_t CalculateTotalSumSTL(const InType n, const InType inf, const std::vector<InType> &dist, const int num_threads) {
   std::vector<int64_t> partial(num_threads, 0);
   std::vector<std::thread> threads(num_threads);
 
