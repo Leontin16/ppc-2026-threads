@@ -62,24 +62,19 @@ bool ShkrebkoMCalcOfIntegralRectOMP::RunImpl() {
   }
 
   double total_sum = 0.0;
-
   omp_set_num_threads(ppc::util::GetNumThreads());
 
-#pragma omp parallel
+#pragma omp parallel default(none) shared(total_points, h, local_input_, dims) reduction(+ : total_sum)
   {
     std::vector<double> point(dims);
-
-#pragma omp for reduction(+ : total_sum)
+#pragma omp for
     for (std::int64_t idx = 0; idx < total_points; ++idx) {
       std::int64_t tmp = idx;
-
       for (int dim = static_cast<int>(dims) - 1; dim >= 0; --dim) {
         const int coord_index = static_cast<int>(tmp % local_input_.n_steps[dim]);
         tmp /= local_input_.n_steps[dim];
-
-        point[dim] = local_input_.limits[dim].first + (static_cast<double>(coord_index) + 0.5) * h[dim];
+        point[dim] = local_input_.limits[dim].first + ((static_cast<double>(coord_index) + 0.5) * h[dim]);
       }
-
       total_sum += local_input_.func(point);
     }
   }
