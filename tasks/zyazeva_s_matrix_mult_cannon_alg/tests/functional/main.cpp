@@ -27,7 +27,7 @@ class ZyazevaARunFuncTestsThreads : public ppc::util::BaseRunFuncTests<InType, O
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     size_t sz = std::get<0>(params);
-    size_t size = sz * sz;
+    size_t size = sz * sz;//3
 
     int up_to = std::get<1>(params);
 
