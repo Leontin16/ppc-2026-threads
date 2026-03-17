@@ -32,7 +32,7 @@ constexpr int kBitsPerDigit = 8;
 constexpr int kRadix = 1 << kBitsPerDigit;
 constexpr uint32_t kSignMask = 0x80000000U;
 
-void ComputePrefixSums(std::vector<int> &count) {
+void ChernovTRadixSortTBB::ComputePrefixSums(std::vector<int> &count) {
   for (size_t idx = 1; idx < count.size(); ++idx) {
     count[idx] += count[idx - 1];
   }
