@@ -35,6 +35,10 @@ bool GaseninLDjstraSTL::PreProcessingImpl() {
   local_min_.assign(num_threads_, inf);
   local_vert_.assign(num_threads_, -1);
 
+  generation_ = 0;
+  pending_ = 0;
+  phase_ = Phase::kIdle;
+
   workers_.resize(num_threads_);
   for (int thread_id = 0; thread_id < num_threads_; ++thread_id) {
     workers_[thread_id] = std::thread(&GaseninLDjstraSTL::WorkerLoop, this, thread_id);
