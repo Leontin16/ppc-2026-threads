@@ -15,7 +15,7 @@ namespace makoveeva_matmul_double_omp {
 
 class MatmulDoubleOMPFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& test_param) {
+  static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param) + "_omp";
   }
 
@@ -47,7 +47,7 @@ class MatmulDoubleOMPFuncTest : public ppc::util::BaseRunFuncTests<InType, OutTy
     expected_output_ = expected;
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     if (expected_output_.size() != output_data.size()) {
       return false;
     }
@@ -77,13 +77,12 @@ TEST_P(MatmulDoubleOMPFuncTest, FoxMatmul) {
 }
 
 const std::array<TestType, 10> kTestParams = {
-    std::make_tuple(1, "1"), std::make_tuple(2, "2"), std::make_tuple(3, "3"),
-    std::make_tuple(4, "4"), std::make_tuple(5, "5"), std::make_tuple(6, "6"),
-    std::make_tuple(7, "7"), std::make_tuple(8, "8"), std::make_tuple(9, "9"),
-    std::make_tuple(10, "10")};
+    std::make_tuple(1, "1"), std::make_tuple(2, "2"),  std::make_tuple(3, "3"), std::make_tuple(4, "4"),
+    std::make_tuple(5, "5"), std::make_tuple(6, "6"),  std::make_tuple(7, "7"), std::make_tuple(8, "8"),
+    std::make_tuple(9, "9"), std::make_tuple(10, "10")};
 
-const auto kTestTasksList = ppc::util::AddFuncTask<MatmulDoubleOMPTask, InType>(
-    kTestParams, PPC_SETTINGS_makoveeva_matmul_double_omp);
+const auto kTestTasksList =
+    ppc::util::AddFuncTask<MatmulDoubleOMPTask, InType>(kTestParams, PPC_SETTINGS_makoveeva_matmul_double_omp);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

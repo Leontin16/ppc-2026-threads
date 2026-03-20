@@ -14,14 +14,16 @@ class MatmulDoubleOMPTask : public BaseTask {
     return ppc::task::TypeOfTask::kOMP;
   }
 
-  explicit MatmulDoubleOMPTask(const InType& in);
+  explicit MatmulDoubleOMPTask(const InType &in);
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  [[nodiscard]] const std::vector<double>& GetResult() const { return C_; }
+  [[nodiscard]] const std::vector<double> &GetResult() const {
+    return C_;
+  }
 
  private:
   size_t n_ = 0;

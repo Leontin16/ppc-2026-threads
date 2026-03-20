@@ -10,23 +10,23 @@
 
 namespace makoveeva_matmul_double_omp {
 
-MatmulDoubleOMPTask::MatmulDoubleOMPTask(const InType& in) : n_(0) {
+MatmulDoubleOMPTask::MatmulDoubleOMPTask(const InType &in) : n_(0) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<double>();
 }
 
 bool MatmulDoubleOMPTask::ValidationImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   const size_t n = std::get<0>(input);
-  const auto& a = std::get<1>(input);
-  const auto& b = std::get<2>(input);
+  const auto &a = std::get<1>(input);
+  const auto &b = std::get<2>(input);
 
   return n > 0 && a.size() == n * n && b.size() == n * n;
 }
 
 bool MatmulDoubleOMPTask::PreProcessingImpl() {
-  const auto& input = GetInput();
+  const auto &input = GetInput();
   n_ = std::get<0>(input);
   A_ = std::get<1>(input);
   B_ = std::get<2>(input);
@@ -36,14 +36,16 @@ bool MatmulDoubleOMPTask::PreProcessingImpl() {
 }
 
 bool MatmulDoubleOMPTask::RunImpl() {
-  if (n_ <= 0) return false;
+  if (n_ <= 0) {
+    return false;
+  }
 
   const size_t n = n_;
-  const auto& a = A_;
-  const auto& b = B_;
-  auto& c = C_;
+  const auto &a = A_;
+  const auto &b = B_;
+  auto &c = C_;
 
-  #pragma omp parallel for collapse(2) default(none) shared(a, b, c, n)
+#pragma omp parallel for collapse(2) default(none) shared(a, b, c, n)
   for (size_t i = 0; i < n; ++i) {
     for (size_t j = 0; j < n; ++j) {
       double sum = 0.0;
