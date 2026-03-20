@@ -16,26 +16,30 @@
 namespace gusev_d_double_sort_even_odd_batcher_omp_task_threads {
 namespace {
 
-uint64_t DoubleToSortableKey(double value) {
+constexpr int kRadixPasses = 8;
+constexpr int kBitsPerByte = 8;
+constexpr size_t kRadixBuckets = 256;
+
+uint64_t DoubleToSortableKey(ValueType value) {
   const auto bits = std::bit_cast<uint64_t>(value);
   const auto sign_mask = uint64_t{1} << 63;
   return (bits & sign_mask) == 0 ? bits ^ sign_mask : ~bits;
 }
 
-void RadixSortDoubles(std::vector<double>& data) {
+void RadixSortDoubles(std::vector<ValueType>& data) {
   if (data.size() < 2) {
     return;
   }
 
-  std::vector<double> buffer(data.size());
+  std::vector<ValueType> buffer(data.size());
   auto* src = &data;
   auto* dst = &buffer;
 
-  for (int byte = 0; byte < 8; ++byte) {
-    std::array<size_t, 256> count{};
-    const auto shift = byte * 8;
+  for (int byte = 0; byte < kRadixPasses; ++byte) {
+    std::array<size_t, kRadixBuckets> count{};
+    const auto shift = byte * kBitsPerByte;
 
-    for (double value : *src) {
+    for (ValueType value : *src) {
       const auto bucket = static_cast<uint8_t>((DoubleToSortableKey(value) >> shift) & 0xFFULL);
       count.at(bucket)++;
     }
@@ -47,7 +51,7 @@ void RadixSortDoubles(std::vector<double>& data) {
       prefix += current;
     }
 
-    for (double value : *src) {
+    for (ValueType value : *src) {
       const auto bucket = static_cast<uint8_t>((DoubleToSortableKey(value) >> shift) & 0xFFULL);
       (*dst)[count.at(bucket)++] = value;
     }
@@ -60,8 +64,8 @@ void RadixSortDoubles(std::vector<double>& data) {
   }
 }
 
-void SplitByGlobalParity(const std::vector<double>& source, size_t global_offset, std::vector<double>& even,
-                         std::vector<double>& odd) {
+void SplitByGlobalParity(const std::vector<ValueType>& source, size_t global_offset, std::vector<ValueType>& even,
+                         std::vector<ValueType>& odd) {
   even.clear();
   odd.clear();
   even.reserve((source.size() + 1) / 2);
@@ -76,8 +80,9 @@ void SplitByGlobalParity(const std::vector<double>& source, size_t global_offset
   }
 }
 
-std::vector<double> InterleaveParityGroups(size_t total_size, const std::vector<double>& even, const std::vector<double>& odd) {
-  std::vector<double> result(total_size);
+std::vector<ValueType> InterleaveParityGroups(size_t total_size, const std::vector<ValueType>& even,
+                                              const std::vector<ValueType>& odd) {
+  std::vector<ValueType> result(total_size);
   size_t even_index = 0;
   size_t odd_index = 0;
 
@@ -92,7 +97,7 @@ std::vector<double> InterleaveParityGroups(size_t total_size, const std::vector<
   return result;
 }
 
-void OddEvenFinalize(std::vector<double>& result) {
+void OddEvenFinalize(std::vector<ValueType>& result) {
   for (size_t phase = 0; phase < result.size(); ++phase) {
     const auto start = phase & 1U;
     for (size_t i = start; i + 1 < result.size(); i += 2) {
@@ -103,17 +108,17 @@ void OddEvenFinalize(std::vector<double>& result) {
   }
 }
 
-std::vector<double> MergeBatcherEvenOdd(const std::vector<double>& left, const std::vector<double>& right) {
-  std::vector<double> left_even;
-  std::vector<double> left_odd;
-  std::vector<double> right_even;
-  std::vector<double> right_odd;
+std::vector<ValueType> MergeBatcherEvenOdd(const std::vector<ValueType>& left, const std::vector<ValueType>& right) {
+  std::vector<ValueType> left_even;
+  std::vector<ValueType> left_odd;
+  std::vector<ValueType> right_even;
+  std::vector<ValueType> right_odd;
 
   SplitByGlobalParity(left, 0, left_even, left_odd);
   SplitByGlobalParity(right, left.size(), right_even, right_odd);
 
-  std::vector<double> merged_even;
-  std::vector<double> merged_odd;
+  std::vector<ValueType> merged_even;
+  std::vector<ValueType> merged_odd;
   merged_even.reserve(left_even.size() + right_even.size());
   merged_odd.reserve(left_odd.size() + right_odd.size());
 
@@ -125,11 +130,19 @@ std::vector<double> MergeBatcherEvenOdd(const std::vector<double>& left, const s
   return result;
 }
 
-std::vector<std::vector<double>> MakeSortedBlocks(const std::vector<double>& input) {
-  const auto omp_threads = static_cast<size_t>(std::max(1, omp_get_max_threads()));
-  const auto block_count = std::max<size_t>(1, std::min(input.size(), omp_threads));
+size_t GetBlockCount(size_t input_size) {
+  if (input_size == 0) {
+    return 0;
+  }
 
-  std::vector<std::vector<double>> blocks(block_count);
+  const auto omp_threads = static_cast<size_t>(std::max(1, omp_get_max_threads()));
+  return std::max<size_t>(1, std::min(input_size, omp_threads));
+}
+
+std::vector<std::vector<ValueType>> MakeSortedBlocks(const std::vector<ValueType>& input) {
+  const auto block_count = GetBlockCount(input.size());
+
+  std::vector<std::vector<ValueType>> blocks(block_count);
 
 #pragma omp parallel for schedule(static) if(block_count > 1)
   for (long long block = 0; block < static_cast<long long>(block_count); ++block) {
@@ -144,10 +157,14 @@ std::vector<std::vector<double>> MakeSortedBlocks(const std::vector<double>& inp
   return blocks;
 }
 
-std::vector<double> MergeBlocks(std::vector<std::vector<double>> blocks) {
+std::vector<ValueType> MergeBlocks(std::vector<std::vector<ValueType>> blocks) {
+  if (blocks.empty()) {
+    return {};
+  }
+
   while (blocks.size() > 1) {
     const auto pair_count = blocks.size() / 2;
-    std::vector<std::vector<double>> next((blocks.size() + 1) / 2);
+    std::vector<std::vector<ValueType>> next((blocks.size() + 1) / 2);
 
 #pragma omp parallel for schedule(static) if(pair_count > 1)
     for (long long pair = 0; pair < static_cast<long long>(pair_count); ++pair) {
