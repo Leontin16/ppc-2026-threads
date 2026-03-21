@@ -16,6 +16,11 @@ class ConvexHullOMP : public HullTaskBase {
     return ppc::task::TypeOfTask::kOMP;
   }
 
+  // Добавляем метод для динамического получения типа задачи
+  ppc::task::TypeOfTask GetDynamicType() const override {
+    return StaticTaskType();
+  }
+
   explicit ConvexHullOMP(const InputType &input);
 
  private:
