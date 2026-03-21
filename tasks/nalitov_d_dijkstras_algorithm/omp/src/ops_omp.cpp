@@ -1,4 +1,6 @@
-#include "nalitov_d_dijkstras_algorithm/seq/include/ops_seq.hpp"
+#include "nalitov_d_dijkstras_algorithm/omp/include/ops_omp.hpp"
+
+#include <omp.h>
 
 #include <algorithm>
 #include <limits>
@@ -28,60 +30,96 @@ inline InType GetEdgeWeight(InType from, InType to) {
   return (from > to) ? (from - to) : (to - from);
 }
 
-InType FindMinDistanceVertex(const std::vector<InType> &distances, const std::vector<bool> &processed,
-                             InType k_infinity) {
-  InType min_distance = k_infinity;
-  InType current_vertex = -1;
-  const auto num_vertices = static_cast<InType>(distances.size());
-
-  for (InType vertex_idx = 0; vertex_idx < num_vertices; ++vertex_idx) {
-    if (!processed[vertex_idx] && distances[vertex_idx] < min_distance) {
-      min_distance = distances[vertex_idx];
-      current_vertex = vertex_idx;
-    }
+int GetWorkerCount() {
+  int worker_count = 1;
+#pragma omp parallel default(none) shared(worker_count)
+  {
+#pragma omp single
+    worker_count = omp_get_num_threads();
   }
-
-  return current_vertex;
+  return worker_count;
 }
 
-void RelaxEdges(InType current_vertex, std::vector<InType> &distances, const std::vector<bool> &processed,
-                InType k_infinity) {
-  const auto num_vertices = static_cast<InType>(distances.size());
+InType SelectNextVertexOmp(std::vector<InType> &distances, std::vector<char> &processed, InType k_infinity,
+                           int worker_count) {
+  const auto vertex_count = static_cast<InType>(distances.size());
+  std::vector<InType> thread_best_distance(worker_count, k_infinity);
+  std::vector<InType> thread_best_vertex(worker_count, -1);
+  InType selected_vertex = -1;
 
-  for (InType neighbor = 0; neighbor < num_vertices; ++neighbor) {
-    if (processed[neighbor] || neighbor == current_vertex) {
-      continue;
-    }
+#pragma omp parallel default(none) shared(vertex_count, distances, processed, thread_best_distance, thread_best_vertex)
+  {
+    const int tid = omp_get_thread_num();
+    InType best_distance = std::numeric_limits<InType>::max();
+    InType best_vertex = -1;
 
-    const InType edge_weight = GetEdgeWeight(current_vertex, neighbor);
-
-    if (distances[current_vertex] == k_infinity) {
-      continue;
-    }
-
-    InType new_distance = 0;
-    if (!SafeAdd(distances[current_vertex], edge_weight, new_distance)) {
-      continue;
-    }
-
-    distances[neighbor] = std::min(new_distance, distances[neighbor]);
-  }
-}
-
-OutType CalculateTotalDistance(const std::vector<InType> &distances, InType k_infinity) {
-  OutType total_sum = 0;
-  const auto num_vertices = static_cast<InType>(distances.size());
-
-  for (InType vertex_idx = 0; vertex_idx < num_vertices; ++vertex_idx) {
-    if (distances[vertex_idx] != k_infinity) {
-      if (total_sum > std::numeric_limits<OutType>::max() - distances[vertex_idx]) {
-        return -1;  // Overflow indicator
+#pragma omp for nowait
+    for (InType vertex_idx = 0; vertex_idx < vertex_count; ++vertex_idx) {
+      if (processed[vertex_idx] == 0 && distances[vertex_idx] < best_distance) {
+        best_distance = distances[vertex_idx];
+        best_vertex = vertex_idx;
       }
-      total_sum += distances[vertex_idx];
+    }
+
+    thread_best_distance[tid] = best_distance;
+    thread_best_vertex[tid] = best_vertex;
+
+#pragma omp barrier
+#pragma omp single
+    {
+      InType best_global_distance = std::numeric_limits<InType>::max();
+      for (int t = 0; t < worker_count; ++t) {
+        if (thread_best_vertex[t] != -1 && (thread_best_distance[t] < best_global_distance ||
+                                            (thread_best_distance[t] == best_global_distance &&
+                                             thread_best_vertex[t] < selected_vertex))) {
+          best_global_distance = thread_best_distance[t];
+          selected_vertex = thread_best_vertex[t];
+        }
+      }
+      if (selected_vertex != -1 && best_global_distance != k_infinity) {
+        processed[selected_vertex] = 1;
+      } else {
+        selected_vertex = -1;
+      }
     }
   }
+  return selected_vertex;
+}
 
-  return total_sum;
+void UpdateNeighborsOmp(InType anchor_vertex, std::vector<InType> &distances, const std::vector<char> &processed,
+                        InType k_infinity) {
+  const auto vertex_count = static_cast<InType>(distances.size());
+  const InType anchor_distance = distances[anchor_vertex];
+
+#pragma omp parallel for default(none) shared(anchor_vertex, distances, processed, vertex_count, k_infinity, anchor_distance)
+  for (InType neighbor = 0; neighbor < vertex_count; ++neighbor) {
+    if (processed[neighbor] == 0 && neighbor != anchor_vertex) {
+      const InType edge_weight = GetEdgeWeight(anchor_vertex, neighbor);
+      if (anchor_distance == k_infinity) {
+        continue;
+      }
+      InType new_distance = 0;
+      if (!SafeAdd(anchor_distance, edge_weight, new_distance)) {
+        continue;
+      }
+      distances[neighbor] = std::min(new_distance, distances[neighbor]);
+    }
+  }
+}
+
+OutType AccumulateReachableDistanceOmp(const std::vector<InType> &distances, InType k_infinity) {
+  long long aggregated_distance = 0;
+  const auto vertex_count = static_cast<InType>(distances.size());
+#pragma omp parallel for reduction(+ : aggregated_distance) default(none) shared(distances, vertex_count, k_infinity)
+  for (InType vertex_idx = 0; vertex_idx < vertex_count; ++vertex_idx) {
+    if (distances[vertex_idx] != k_infinity) {
+      aggregated_distance += distances[vertex_idx];
+    }
+  }
+  if (aggregated_distance < 0 || aggregated_distance > std::numeric_limits<OutType>::max()) {
+    return -1;
+  }
+  return static_cast<OutType>(aggregated_distance);
 }
 
 }  // namespace
@@ -108,6 +146,13 @@ bool NalitovDDijkstrasAlgorithmOmp::ValidationImpl() {
 }
 
 bool NalitovDDijkstrasAlgorithmOmp::PreProcessingImpl() {
+  const InType n = GetInput();
+  const InType k_infinity = std::numeric_limits<InType>::max();
+  distances_.assign(n, k_infinity);
+  processed_.assign(n, 0);
+  if (!distances_.empty()) {
+    distances_[0] = 0;
+  }
   GetOutput() = 0;
   return true;
 }
@@ -129,28 +174,24 @@ bool NalitovDDijkstrasAlgorithmOmp::RunImpl() {
   }
 
   const InType k_infinity = std::numeric_limits<InType>::max();
-  std::vector<InType> distances(n, k_infinity);
-  std::vector<bool> processed(n, false);
-
-  if (distances.empty()) {
+  if (distances_.empty()) {
     return false;
   }
-  distances[0] = 0;
+  const int worker_count = GetWorkerCount();
 
   for (InType iteration = 0; iteration < n; ++iteration) {
-    const InType current_vertex = FindMinDistanceVertex(distances, processed, k_infinity);
+    const InType current_vertex = SelectNextVertexOmp(distances_, processed_, k_infinity, worker_count);
 
-    if (current_vertex == -1 || distances[current_vertex] == k_infinity) {
+    if (current_vertex == -1 || distances_[current_vertex] == k_infinity) {
       break;
     }
 
-    processed[current_vertex] = true;
-    RelaxEdges(current_vertex, distances, processed, k_infinity);
+    UpdateNeighborsOmp(current_vertex, distances_, processed_, k_infinity);
   }
 
-  const OutType total_sum = CalculateTotalDistance(distances, k_infinity);
+  const OutType total_sum = AccumulateReachableDistanceOmp(distances_, k_infinity);
   if (total_sum < 0) {
-    return false;  // Overflow occurred
+    return false;
   }
 
   GetOutput() = total_sum;
