@@ -1,12 +1,12 @@
 #include "../../omp/include/ops_omp.hpp"
 
 #include <atomic>
-#include <numeric>
+#include <complex>
+#include <cstddef>
 #include <vector>
 
 #include "omp.h"
 #include "shvetsova_k_mult_matrix_complex_col/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace shvetsova_k_mult_matrix_complex_col {
 
@@ -40,7 +40,7 @@ bool ShvetsovaKMultMatrixComplexOMP::RunImpl() {
   std::vector<std::vector<std::complex<double>>> columns_c(matrix_b.cols);
   auto &matrix_c = GetOutput();
 
-#pragma omp parallel
+#pragma omp parallel default(shared)
   {
 #pragma omp for
     for (int i = 0; i < matrix_b.cols; i++) {
@@ -58,12 +58,12 @@ bool ShvetsovaKMultMatrixComplexOMP::RunImpl() {
     }
   }
 
-  for (size_t i = 0; i < columns_c.size(); i++) {
+  for (const auto &col : columns_c) {
     int counter = 0;
-    for (size_t k = 0; k < columns_c[i].size(); k++) {
-      if (columns_c[i][k] != std::complex(0., 0.)) {
+    for (size_t k = 0; k < col.size(); k++) {
+      if (col[k] != std::complex(0., 0.)) {
         matrix_c.row_ind.push_back(static_cast<int>(k));
-        matrix_c.values.push_back(columns_c[i][k]);
+        matrix_c.values.push_back(col[k]);
         counter++;
       }
     }

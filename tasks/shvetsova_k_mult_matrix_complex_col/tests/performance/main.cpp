@@ -1,3 +1,5 @@
+#include <gtest/gtest.h>
+
 #include <tuple>
 
 #include "../../omp/include/ops_omp.hpp"
@@ -63,8 +65,11 @@ TEST_P(ShvetsovaKRunPerfTestThreads, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ShvetsovaKMultMatrixComplexOMP>(
+const auto kSEQPerfTasks = ppc::util::MakeAllPerfTasks<InType, ShvetsovaKMultMatrixComplexSEQ>(
     PPC_SETTINGS_shvetsova_k_mult_matrix_complex_col);
+const auto kOMPPerfTasks = ppc::util::MakeAllPerfTasks<InType, ShvetsovaKMultMatrixComplexOMP>(
+    PPC_SETTINGS_shvetsova_k_mult_matrix_complex_col);
+const auto kAllPerfTasks = std::tuple_cat(kSEQPerfTasks, kOMPPerfTasks);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

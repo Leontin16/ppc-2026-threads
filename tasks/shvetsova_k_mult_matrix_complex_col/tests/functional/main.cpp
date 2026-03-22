@@ -1,4 +1,4 @@
-#include <stb/stb_image.h>
+#include <gtest/gtest.h>
 
 #include <array>
 #include <cstddef>
@@ -7,9 +7,9 @@
 #include <tuple>
 #include <vector>
 
+#include "../../common/include/common.hpp"
+#include "../../omp/include/ops_omp.hpp"
 #include "omp.h"
-#include "shvetsova_k_mult_matrix_complex_col/common/include/common.hpp"
-#include "shvetsova_k_mult_matrix_complex_col/omp/include/ops_omp.hpp"
 #include "shvetsova_k_mult_matrix_complex_col/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
