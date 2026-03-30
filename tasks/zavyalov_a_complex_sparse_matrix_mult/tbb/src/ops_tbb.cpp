@@ -71,9 +71,6 @@ bool ZavyalovAComplSparseMatrMultTBB::PreProcessingImpl() {
 }
 
 bool ZavyalovAComplSparseMatrMultTBB::RunImpl() {
-  // std::atomic<int> counter(0);
-  // tbb::parallel_for(0, ppc::util::GetNumThreads(), [&](int /*i*/) { counter++; });
-
   const auto &matr_a = std::get<0>(GetInput());
   const auto &matr_b = std::get<1>(GetInput());
 
