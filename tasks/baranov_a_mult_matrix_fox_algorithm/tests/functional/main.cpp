@@ -12,7 +12,6 @@
 #include "baranov_a_mult_matrix_fox_algorithm/common/include/common.hpp"
 #include "baranov_a_mult_matrix_fox_algorithm/omp/include/ops_omp.hpp"
 #include "baranov_a_mult_matrix_fox_algorithm/seq/include/ops_seq.hpp"
-#include "baranov_a_mult_matrix_fox_algorithm/stl/include/ops_stl.hpp"
 #include "baranov_a_mult_matrix_fox_algorithm/tbb/include/ops_tbb.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -28,12 +27,7 @@ class BaranovAMatrixMultiplicationFuncTest
   static std::string PrintTestParam(const baranov_a_mult_matrix_fox_algorithm::TestType &test_param) {
     size_t n = std::get<0>(test_param);
     std::string type = std::get<1>(test_param);
-    std::string impl =
-        (std::is_same_v<TaskType, baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP>)   ? "omp"
-        : (std::is_same_v<TaskType, baranov_a_mult_matrix_fox_algorithm_tbb::BaranovAMultMatrixFoxAlgorithmTBB>) ? "tbb"
-        : (std::is_same_v<TaskType, baranov_a_mult_matrix_fox_algorithm_stl::BaranovAMultMatrixFoxAlgorithmSTL>)
-            ? "stl"
-            : "seq";
+    std::string impl = GetImplementationName<TaskType>();
     return "n_" + std::to_string(n) + "_" + type + "_" + impl;
   }
 
@@ -102,6 +96,19 @@ class BaranovAMatrixMultiplicationFuncTest
   }
 
  private:
+  template <typename T>
+  static std::string GetImplementationName() {
+    if constexpr (std::is_same_v<T, baranov_a_mult_matrix_fox_algorithm_seq::BaranovAMultMatrixFoxAlgorithmSEQ>) {
+      return "seq";
+    } else if constexpr (std::is_same_v<T,
+                                        baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP>) {
+      return "omp";
+    } else if constexpr (std::is_same_v<T,
+                                        baranov_a_mult_matrix_fox_algorithm_tbb::BaranovAMultMatrixFoxAlgorithmTBB>) {
+      return "tbb";
+    }
+  }
+
   static void ReferenceMultiply(const std::vector<double> &a, const std::vector<double> &b, std::vector<double> &c,
                                 size_t n) {
     for (size_t i = 0; i < n; ++i) {
@@ -199,8 +206,6 @@ using BaranovAOMPFuncTest =
     BaranovAMatrixMultiplicationFuncTest<baranov_a_mult_matrix_fox_algorithm_omp::BaranovAMultMatrixFoxAlgorithmOMP>;
 using BaranovATBBFuncTest =
     BaranovAMatrixMultiplicationFuncTest<baranov_a_mult_matrix_fox_algorithm_tbb::BaranovAMultMatrixFoxAlgorithmTBB>;
-using BaranovASTLFuncTest =
-    BaranovAMatrixMultiplicationFuncTest<baranov_a_mult_matrix_fox_algorithm_stl::BaranovAMultMatrixFoxAlgorithmSTL>;
 
 namespace {
 
@@ -216,25 +221,14 @@ TEST_P(BaranovATBBFuncTest, MatrixMultiplicationTest) {
   ExecuteTest(GetParam());
 }
 
-TEST_P(BaranovASTLFuncTest, MatrixMultiplicationTest) {
-  ExecuteTest(GetParam());
-}
-
 const std::array<baranov_a_mult_matrix_fox_algorithm::TestType, 20> kTestParams = {
     std::make_tuple(1, "size1_simple"),   std::make_tuple(2, "size2_simple"),   std::make_tuple(3, "size3_simple"),
-
     std::make_tuple(2, "identity_2"),     std::make_tuple(4, "identity_4"),     std::make_tuple(8, "identity_8"),
-
     std::make_tuple(3, "random_seed123"), std::make_tuple(5, "random_seed456"), std::make_tuple(7, "random_seed789"),
-
-    std::make_tuple(4, "extreme_4"),      std::make_tuple(6, "extreme_6"),
-
-    std::make_tuple(4, "sparse_4"),       std::make_tuple(8, "sparse_8"),
-
-    std::make_tuple(3, "constant_3"),     std::make_tuple(5, "constant_5"),     std::make_tuple(7, "constant_7"),
-
-    std::make_tuple(16, "size16_block"),  std::make_tuple(32, "size32_block"),  std::make_tuple(64, "size64_block"),
-    std::make_tuple(128, "size128_block")};
+    std::make_tuple(4, "extreme_4"),      std::make_tuple(6, "extreme_6"),      std::make_tuple(4, "sparse_4"),
+    std::make_tuple(8, "sparse_8"),       std::make_tuple(3, "constant_3"),     std::make_tuple(5, "constant_5"),
+    std::make_tuple(7, "constant_7"),     std::make_tuple(16, "size16_block"),  std::make_tuple(32, "size32_block"),
+    std::make_tuple(64, "size64_block"),  std::make_tuple(128, "size128_block")};
 
 const auto kTestTasksListSEQ =
     ppc::util::AddFuncTask<baranov_a_mult_matrix_fox_algorithm_seq::BaranovAMultMatrixFoxAlgorithmSEQ,
@@ -251,18 +245,12 @@ const auto kTestTasksListTBB =
                            baranov_a_mult_matrix_fox_algorithm::InType>(
         kTestParams, PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
 
-const auto kTestTasksListSTL =
-    ppc::util::AddFuncTask<baranov_a_mult_matrix_fox_algorithm_stl::BaranovAMultMatrixFoxAlgorithmSTL,
-                           baranov_a_mult_matrix_fox_algorithm::InType>(
-        kTestParams, PPC_SETTINGS_baranov_a_mult_matrix_fox_algorithm);
-
-const auto kTestTasksList = std::tuple_cat(kTestTasksListSEQ, kTestTasksListOMP, kTestTasksListTBB, kTestTasksListSTL);
+const auto kTestTasksList = std::tuple_cat(kTestTasksListSEQ, kTestTasksListOMP, kTestTasksListTBB);
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestNameSEQ = BaranovASEQFuncTest::PrintFuncTestName<BaranovASEQFuncTest>;
 const auto kTestNameOMP = BaranovAOMPFuncTest::PrintFuncTestName<BaranovAOMPFuncTest>;
 const auto kTestNameTBB = BaranovATBBFuncTest::PrintFuncTestName<BaranovATBBFuncTest>;
-const auto kTestNameSTL = BaranovASTLFuncTest::PrintFuncTestName<BaranovASTLFuncTest>;
 
 INSTANTIATE_TEST_SUITE_P(FoxAlgorithmSEQTes, BaranovASEQFuncTest, ppc::util::ExpandToValues(kTestTasksListSEQ),
                          kTestNameSEQ);
@@ -270,8 +258,6 @@ INSTANTIATE_TEST_SUITE_P(FoxAlgorithmOMPTests, BaranovAOMPFuncTest, ppc::util::E
                          kTestNameOMP);
 INSTANTIATE_TEST_SUITE_P(FoxAlgorithmTBBTests, BaranovATBBFuncTest, ppc::util::ExpandToValues(kTestTasksListTBB),
                          kTestNameTBB);
-INSTANTIATE_TEST_SUITE_P(FoxAlgorithmSTLTests, BaranovASTLFuncTest, ppc::util::ExpandToValues(kTestTasksListSTL),
-                         kTestNameSTL);
 
 }  // namespace
 

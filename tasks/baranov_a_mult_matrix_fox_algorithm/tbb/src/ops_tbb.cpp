@@ -33,7 +33,7 @@ void BaranovAMultMatrixFoxAlgorithmTBB::StandardMultiplication(size_t n) {
   const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
   auto &output = GetOutput();
 
-  tbb::parallel_for(size_t(0), n, [&](size_t i) {
+  tbb::parallel_for(static_cast<size_t>(0), n, [&](size_t i) {
     for (size_t j = 0; j < n; ++j) {
       double sum = 0.0;
       for (size_t k = 0; k < n; ++k) {
@@ -50,13 +50,10 @@ void BaranovAMultMatrixFoxAlgorithmTBB::FoxBlockMultiplication(size_t n, size_t 
 
   size_t num_blocks = (n + block_size - 1) / block_size;
 
-  // Обнуление выходной матрицы
-  tbb::parallel_for(size_t(0), n * n, [&](size_t idx) { output[idx] = 0.0; });
+  tbb::parallel_for(static_cast<size_t>(0), n * n, [&](size_t idx) { output[idx] = 0.0; });
 
-  // Основной цикл алгоритма Фокса
   for (size_t bk = 0; bk < num_blocks; ++bk) {
-    // Параллельная обработка блоков строк (bi) и столбцов (bj)
-    tbb::parallel_for(size_t(0), num_blocks * num_blocks, [&](size_t linear_idx) {
+    tbb::parallel_for(static_cast<size_t>(0), num_blocks * num_blocks, [&](size_t linear_idx) {
       size_t bi = linear_idx / num_blocks;
       size_t bj = linear_idx % num_blocks;
 
@@ -69,15 +66,12 @@ void BaranovAMultMatrixFoxAlgorithmTBB::FoxBlockMultiplication(size_t n, size_t 
       size_t k_start = broadcast_block * block_size;
       size_t k_end = std::min(k_start + block_size, n);
 
-      // Внутреннее умножение блоков
       for (size_t i = i_start; i < i_end; ++i) {
         for (size_t j = j_start; j < j_end; ++j) {
           double sum = 0.0;
           for (size_t k = k_start; k < k_end; ++k) {
             sum += matrix_a[(i * n) + k] * matrix_b[(k * n) + j];
           }
-          // Атомарное обновление (не требуется, так как каждый элемент
-          // обновляется только в одном потоке для данной пары (bi,bj))
           output[(i * n) + j] += sum;
         }
       }
@@ -88,8 +82,6 @@ void BaranovAMultMatrixFoxAlgorithmTBB::FoxBlockMultiplication(size_t n, size_t 
 bool BaranovAMultMatrixFoxAlgorithmTBB::RunImpl() {
   const auto &[matrix_size, matrix_a, matrix_b] = GetInput();
   size_t n = matrix_size;
-
-  // Оптимальный размер блока для TBB (можно настроить)
   size_t block_size = 64;
   if (n < block_size) {
     StandardMultiplication(n);
