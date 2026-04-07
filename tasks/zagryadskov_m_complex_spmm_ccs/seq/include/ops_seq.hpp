@@ -1,8 +1,5 @@
 #pragma once
 
-#include <complex>
-#include <vector>
-
 #include "task/include/task.hpp"
 #include "zagryadskov_m_complex_spmm_ccs/common/include/common.hpp"
 
@@ -18,12 +15,6 @@ class ZagryadskovMComplexSpMMCCSSEQ : public BaseTask {
   static void SpMM(const CCS &a, const CCS &b, CCS &c);
 
  private:
-  inline static void SpMMSymbolic(const CCS &a, const CCS &b, std::vector<int> &col_ptr, int jstart, int jend);
-  inline static void SpMMNumeric(const CCS &a, const CCS &b, CCS &c, const std::complex<double> &zero, int jstart,
-                                 int jend);
-  inline static void SpMMKernel(const CCS &a, const CCS &b, CCS &c, const std::complex<double> &zero,
-                                std::vector<int> &rows, std::vector<std::complex<double>> &acc,
-                                std::vector<int> &marker, int j);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
