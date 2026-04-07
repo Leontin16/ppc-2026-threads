@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "romanov_a_gauss_block/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace romanov_a_gauss_block {
 
@@ -85,8 +86,6 @@ void ProcessPartBlock(const std::vector<uint8_t> &initial_picture, std::vector<u
 
 }  // namespace
 
-#include <iostream>
-
 bool RomanovAGaussBlockSTL::RunImpl() {
   const int width = std::get<0>(GetInput());
   const int height = std::get<1>(GetInput());
@@ -99,8 +98,9 @@ bool RomanovAGaussBlockSTL::RunImpl() {
 
   const int num_threads = ppc::util::GetNumThreads();
   std::vector<std::thread> threads;
+  threads.reserve(num_threads);
 
-  auto Processing = [&](int current_part) {
+  auto processing = [&](int current_part) {
     int left_border_r = (num_row_blocks * current_part) / num_threads;
     int right_border_r = (num_row_blocks * (current_part + 1)) / num_threads;
     for (int bi = left_border_r; bi < right_border_r; ++bi) {
@@ -119,7 +119,7 @@ bool RomanovAGaussBlockSTL::RunImpl() {
   };
 
   for (int tid = 0; tid < num_threads; tid++) {
-    threads.emplace_back(Processing, tid);
+    threads.emplace_back(processing, tid);
   }
 
   for (auto &th : threads) {
