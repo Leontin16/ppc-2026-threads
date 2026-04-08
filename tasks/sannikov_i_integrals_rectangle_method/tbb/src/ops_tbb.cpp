@@ -45,8 +45,8 @@ namespace {
 
 bool ComputeSlice(const std::function<double(const std::vector<double> &)> &f,
                   const std::vector<std::pair<double, double>> &brd, const std::vector<double> &h,
-                  std::size_t outer_dim, int64_t inner_cells, int num_splits, int outer,
-                  std::vector<int> &idx, std::vector<double> &x, double &local_sum) {
+                  std::size_t outer_dim, int64_t inner_cells, int num_splits, int outer, std::vector<int> &idx,
+                  std::vector<double> &x, double &local_sum) {
   for (std::size_t i = 0; i < outer_dim; ++i) {
     idx[i] = 0;
   }
@@ -105,29 +105,26 @@ bool SannikovIIntegralsRectangleMethodTBB::RunImpl() {
 
   bool error_flag = false;
 
-  double sum = tbb::parallel_reduce(
-      tbb::blocked_range<int>(0, num_splits),
-      0.0,
-      [&](const tbb::blocked_range<int> &range, double partial_sum) -> double {
-        std::vector<int> idx(dim, 0);
-        std::vector<double> x(dim);
+  double sum = tbb::parallel_reduce(tbb::blocked_range<int>(0, num_splits), 0.0,
+                                    [&](const tbb::blocked_range<int> &range, double partial_sum) -> double {
+    std::vector<int> idx(dim, 0);
+    std::vector<double> x(dim);
 
-        for (int outer = range.begin(); outer < range.end(); ++outer) {
-          if (error_flag) {
-            break;
-          }
+    for (int outer = range.begin(); outer < range.end(); ++outer) {
+      if (error_flag) {
+        break;
+      }
 
-          double local_sum = 0.0;
-          if (!ComputeSlice(f, brd, h, outer_dim, inner_cells, num_splits, outer, idx, x, local_sum)) {
-            error_flag = true;
-            break;
-          }
-          partial_sum += local_sum;
-        }
+      double local_sum = 0.0;
+      if (!ComputeSlice(f, brd, h, outer_dim, inner_cells, num_splits, outer, idx, x, local_sum)) {
+        error_flag = true;
+        break;
+      }
+      partial_sum += local_sum;
+    }
 
-        return partial_sum;
-      },
-      std::plus<>());
+    return partial_sum;
+  }, std::plus<>());
 
   if (error_flag) {
     return false;
