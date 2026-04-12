@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "util/include/util.hpp"
 #include "zenin_a_radix_sort_double_batcher_merge/common/include/common.hpp"
 
 namespace zenin_a_radix_sort_double_batcher_merge {
@@ -105,26 +106,30 @@ void ZeninARadixSortDoubleBatcherMergeSTL::LSDRadixSort(std::vector<double> &arr
   }
 }
 
+void ZeninARadixSortDoubleBatcherMergeSTL::MergeFirstPass(std::vector<double> &arr, size_t po, size_t num_threads) {
+  size_t chunk = (po + num_threads - 1) / num_threads;
+  std::vector<std::thread> threads;
+  for (size_t tid = 0; tid < num_threads; ++tid) {
+    size_t lo = tid * chunk;
+    size_t hi = std::min(lo + chunk, po);
+    if (lo >= hi) {
+      break;
+    }
+    threads.emplace_back([&arr, lo, hi, po]() {
+      for (size_t i = lo; i < hi; ++i) {
+        BlocksComparing(arr, i, i + po);
+      }
+    });
+  }
+  for (auto &th : threads) {
+    th.join();
+  }
+}
+
 void ZeninARadixSortDoubleBatcherMergeSTL::BatcherOddEvenMerge(std::vector<double> &arr, size_t n, size_t num_threads) {
   for (size_t po = n / 2; po > 0; po >>= 1) {
     if (po == n / 2) {
-      size_t chunk = (po + num_threads - 1) / num_threads;
-      std::vector<std::thread> threads;
-      for (size_t t = 0; t < num_threads; ++t) {
-        size_t lo = t * chunk;
-        size_t hi = std::min(lo + chunk, po);
-        if (lo >= hi) {
-          break;
-        }
-        threads.emplace_back([&arr, lo, hi, po]() {
-          for (size_t i = lo; i < hi; ++i) {
-            BlocksComparing(arr, i, i + po);
-          }
-        });
-      }
-      for (auto &th : threads) {
-        th.join();
-      }
+      MergeFirstPass(arr, po, num_threads);
     } else {
       for (size_t i = po; i < n - po; i += 2 * po) {
         for (size_t j = 0; j < po; ++j) {

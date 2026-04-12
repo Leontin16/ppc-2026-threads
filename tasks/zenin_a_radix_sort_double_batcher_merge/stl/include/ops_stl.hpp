@@ -23,6 +23,7 @@ class ZeninARadixSortDoubleBatcherMergeSTL : public BaseTask {
   bool PostProcessingImpl() override;
 
   static void BlocksComparing(std::vector<double> &arr, size_t i, size_t j);
+  static void MergeFirstPass(std::vector<double> &arr, size_t po, size_t num_threads);
   static uint64_t PackDouble(double v) noexcept;
   static double UnpackDouble(uint64_t k) noexcept;
   static void LSDRadixSort(std::vector<double> &arr);
