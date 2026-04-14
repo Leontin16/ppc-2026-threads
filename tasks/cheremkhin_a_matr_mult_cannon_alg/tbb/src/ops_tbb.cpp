@@ -104,17 +104,15 @@ bool CheremkhinAMatrMultCannonAlgTBB::RunImpl() {
 
   oneapi::tbb::parallel_for(oneapi::tbb::blocked_range2d<std::int64_t>(0, q64, 0, q64),
                             [&](const oneapi::tbb::blocked_range2d<std::int64_t> &range) {
-                              for (std::int64_t bi = range.rows().begin(); bi != range.rows().end(); ++bi) {
-                                for (std::int64_t bj = range.cols().begin(); bj != range.cols().end(); ++bj) {
-                                  for (std::size_t step = 0; step < q; ++step) {
-                                    const std::size_t bk =
-                                        (static_cast<std::size_t>(bi) + static_cast<std::size_t>(bj) + step) % q;
-                                    MulAddBlock(a, b, c, np, bs, static_cast<std::size_t>(bi), bk,
-                                                static_cast<std::size_t>(bj));
-                                  }
-                                }
-                              }
-                            });
+    for (std::int64_t bi = range.rows().begin(); bi != range.rows().end(); ++bi) {
+      for (std::int64_t bj = range.cols().begin(); bj != range.cols().end(); ++bj) {
+        for (std::size_t step = 0; step < q; ++step) {
+          const std::size_t bk = (static_cast<std::size_t>(bi) + static_cast<std::size_t>(bj) + step) % q;
+          MulAddBlock(a, b, c, np, bs, static_cast<std::size_t>(bi), bk, static_cast<std::size_t>(bj));
+        }
+      }
+    }
+  });
 
   std::vector<double> out(n * n, 0.0);
 

@@ -92,12 +92,10 @@ const std::array<TestType, 7> kTestParams = {
     std::make_tuple(7, 300, "medium3_matrix"),     std::make_tuple(10, 700, "large_matrix"),
     std::make_tuple(15, 1500, "very_large_matrix")};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgSEQ, InType>(
-                                               kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg),
-                                           ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgOMP, InType>(
-                                               kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg),
-                                           ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgTBB, InType>(
-                                               kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg));
+const auto kTestTasksList = std::tuple_cat(
+  ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgSEQ, InType>(kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg),
+  ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgOMP, InType>(kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg),   
+  ppc::util::AddFuncTask<CheremkhinAMatrMultCannonAlgTBB, InType>(kTestParams, PPC_SETTINGS_cheremkhin_a_matr_mult_cannon_alg));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
