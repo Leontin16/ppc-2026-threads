@@ -33,6 +33,9 @@ int GetExpectedCount(const std::string &type) {
   if (type == "complex") {
     return 2;
   }
+  if (type == "large_complex") {
+    return 4;
+  }
   return 0;
 }
 
@@ -118,6 +121,39 @@ class MarkingComponentsFuncTest : public ppc::util::BaseRunFuncTests<InType, Out
       image.data = {0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1};
       image.width = 5;
       image.height = 5;
+    } else if (type == "large_complex") {
+      // 4 components to defeat GCC -O3 unrolling
+      image.width = 30;
+      image.height = 30;
+      image.data.assign(30 * 30, 1);
+
+      // Component 1: top horizontal line
+      for (int i = 0; i < 30; ++i) {
+        image.data[0 * 30 + i] = 0;
+      }
+
+      // Component 2: vertical line in middle
+      for (int i = 5; i < 25; ++i) {
+        image.data[i * 30 + 15] = 0;
+      }
+
+      // Component 3: box
+      for (int i = 25; i <= 27; ++i) {
+        for (int j = 25; j <= 27; ++j) {
+          image.data[i * 30 + j] = 0;
+        }
+      }
+
+      // Component 4: U-shape
+      for (int i = 10; i < 20; ++i) {
+        image.data[i * 30 + 5] = 0;  // left arm
+      }
+      for (int i = 10; i < 20; ++i) {
+        image.data[i * 30 + 10] = 0;  // right arm
+      }
+      for (int j = 5; j <= 10; ++j) {
+        image.data[19 * 30 + j] = 0;  // bottom connection
+      }
     }
 
     return image;
@@ -129,9 +165,10 @@ TEST_P(MarkingComponentsFuncTest, VariousBinaryImages) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 6> kTestParam = {std::make_tuple(0, "empty"),           std::make_tuple(1, "one_component"),
+const std::array<TestType, 7> kTestParam = {std::make_tuple(0, "empty"),           std::make_tuple(1, "one_component"),
                                             std::make_tuple(2, "isolated_pixels"), std::make_tuple(3, "two_regions"),
-                                            std::make_tuple(4, "u_shape"),         std::make_tuple(5, "complex")};
+                                            std::make_tuple(4, "u_shape"),         std::make_tuple(5, "complex"),
+                                            std::make_tuple(6, "large_complex")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KondrashovaVTaskSEQ, InType>(kTestParam, PPC_SETTINGS_kondrashova_v_marking_components),
