@@ -54,28 +54,25 @@ bool PerepelkinIConvexHullGrahamScanSTL::RunImpl() {
 }
 
 size_t PerepelkinIConvexHullGrahamScanSTL::FindPivotParallel(const std::vector<std::pair<double, double>> &pts) {
-  size_t pivot_idx = 0;
-  const int threads = ppc::util::GetNumThreads();
-  const size_t block_size = pts.size() / threads;
+  const int threads = std::min(ppc::util::GetNumThreads(), static_cast<int>(pts.size()));
 
+  // Partitioning
+  std::vector<int> start(threads + 1);
+  DataPartitioning(pts.size(), threads, start);
+
+  // Parallel search
   std::vector<size_t> local_idx(threads, 0);
-
-  // Parallel local pivot finding
   {
-    std::vector<std::jthread> workers;
+    std::vector<std::jthread> workers(threads);
 
     for (int tid = 0; tid < threads; tid++) {
       workers.emplace_back([&, tid]() {
-        size_t local = pivot_idx;
+        size_t begin = start[tid];
+        size_t end = start[tid + 1];
 
-        size_t start = tid * block_size;
-        size_t end = (tid + 1) * block_size;
+        size_t local = begin;
 
-        if (start == 0) {
-          start = 1;
-        }
-
-        for (size_t i = start; i < end; i++) {
+        for (size_t i = begin + 1; i < end; i++) {
           if (pts[i].second < pts[local].second ||
               (pts[i].second == pts[local].second && pts[i].first < pts[local].first)) {
             local = i;
@@ -87,7 +84,9 @@ size_t PerepelkinIConvexHullGrahamScanSTL::FindPivotParallel(const std::vector<s
     }
   }
 
-  // Reduction
+  // Sequential reduction
+  size_t pivot_idx = 0;
+
   for (int tid = 0; tid < threads; tid++) {
     size_t i = local_idx[tid];
 
@@ -102,17 +101,15 @@ size_t PerepelkinIConvexHullGrahamScanSTL::FindPivotParallel(const std::vector<s
 
 void PerepelkinIConvexHullGrahamScanSTL::ParallelSort(std::vector<std::pair<double, double>> &data,
                                                       const std::pair<double, double> &pivot) {
-  const int threads = ppc::util::GetNumThreads();
-  const size_t block_size = data.size() / threads;
+  const int threads = std::min(ppc::util::GetNumThreads(), static_cast<int>(data.size()));
 
+  // Partitioning
   std::vector<int> start(threads + 1);
-  for (int i = 0; i <= threads; i++) {
-    start[i] = static_cast<int>(i * block_size);
-  }
+  DataPartitioning(data.size(), threads, start);
 
   // Parallel local sorting
   {
-    std::vector<std::jthread> workers;
+    std::vector<std::jthread> workers(threads);
 
     for (int tid = 0; tid < threads; tid++) {
       workers.emplace_back([&, tid]() {
@@ -124,7 +121,7 @@ void PerepelkinIConvexHullGrahamScanSTL::ParallelSort(std::vector<std::pair<doub
 
   // Merge sorted segments
   for (int size = 1; size < threads; size *= 2) {
-    std::vector<std::jthread> workers;
+    std::vector<std::jthread> workers(threads);
 
     for (int i = 0; i < threads; i += 2 * size) {
       if (i + size >= threads) {
@@ -143,9 +140,26 @@ void PerepelkinIConvexHullGrahamScanSTL::ParallelSort(std::vector<std::pair<doub
   }
 }
 
-void perepelkin_i_convex_hull_graham_scan::PerepelkinIConvexHullGrahamScanSTL::HullConstruction(
-    std::vector<std::pair<double, double>> &hull, const std::vector<std::pair<double, double>> &pts,
-    const std::pair<double, double> &pivot) {
+void PerepelkinIConvexHullGrahamScanSTL::DataPartitioning(size_t total_size, const int &threads,
+                                                          std::vector<int> &start) {
+  size_t base = total_size / threads;
+  size_t rem = total_size % threads;
+
+  size_t offset = 0;
+
+  for (int i = 0; i < threads; i++) {
+    start[i] = static_cast<int>(offset);
+
+    size_t extra = std::cmp_less(i, rem) ? 1 : 0;
+    offset += base + extra;
+  }
+
+  start[threads] = static_cast<int>(total_size);
+}
+
+void PerepelkinIConvexHullGrahamScanSTL::HullConstruction(std::vector<std::pair<double, double>> &hull,
+                                                          const std::vector<std::pair<double, double>> &pts,
+                                                          const std::pair<double, double> &pivot) {
   hull.reserve(pts.size() + 1);
 
   hull.push_back(pivot);
