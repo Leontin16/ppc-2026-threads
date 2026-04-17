@@ -1,11 +1,12 @@
 #include "shkryleva_s_shell_sort_simple_merge/tbb/include/ops_tbb.hpp"
 
+#include <oneapi/tbb/info.h>
 #include <oneapi/tbb/task_arena.h>
 #include <oneapi/tbb/task_group.h>
 
 #include <algorithm>
-#include <core/util/include/util.hpp>
 #include <cstddef>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -85,10 +86,20 @@ bool ShkrylevaSShellMergeTBB::RunImpl() {
   std::vector<int> arr = input_data_;
   const int array_size = static_cast<int>(arr.size());
 
-  const int max_threads = ppc::util::GetPPCNumThreads();
+  // Определение максимального количества потоков
+  // Используем TBB, если доступно, иначе std::thread
+  int max_threads = tbb::info::default_concurrency();
+  if (max_threads <= 0) {
+    max_threads = static_cast<int>(std::thread::hardware_concurrency());
+    if (max_threads <= 0) {
+      max_threads = 4;
+    }
+  }
+
   int threads = std::min(max_threads, array_size);
   const int sub_arr_size = (array_size + threads - 1) / threads;
 
+  // Разбиение на сегменты
   std::vector<std::pair<int, int>> segments;
   segments.reserve(threads);
   for (int idx = 0; idx < threads; ++idx) {
