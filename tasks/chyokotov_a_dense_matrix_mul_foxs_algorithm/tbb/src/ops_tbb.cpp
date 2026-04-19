@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "chyokotov_a_dense_matrix_mul_foxs_algorithm/common/include/common.hpp"
@@ -37,17 +38,23 @@ int ChyokotovADenseMatMulFoxAlgorithmTBB::CountBlock(int n, int size) {
 
 void ChyokotovADenseMatMulFoxAlgorithmTBB::Matmul(std::vector<double> &a, std::vector<double> &b, int n, int istart,
                                                   int iend, int jstart, int jend, int kstart, int kend) {
-  tbb::parallel_for(istart, iend, [&](size_t i) {
-    double *output_row = GetOutput().data() + (i * static_cast<size_t>(n));
-    const double *a_row = a.data() + (i * static_cast<size_t>(n));
+  const size_t n_sz = static_cast<size_t>(n);
+  const size_t istart_sz = static_cast<size_t>(istart);
+  const size_t iend_sz = static_cast<size_t>(iend);
+
+  tbb::parallel_for(istart_sz, iend_sz, [&](size_t i) {
+    double *output_row = GetOutput().data() + i * n_sz;
+    const double *a_row = a.data() + i * n_sz;
 
     for (int j = jstart; j < jend; ++j) {
-      long double sum = 0.0;
+      long double sum = 0.0L;
       const double *b_col = b.data() + j;
+
       for (int k = kstart; k < kend; ++k) {
-        sum += a_row[k] * b_col[k * n];
+        const size_t k_sz = static_cast<size_t>(k);
+        sum += static_cast<long double>(a_row[k_sz]) * static_cast<long double>(b_col[k_sz * n_sz]);
       }
-      output_row[j] += sum;
+      output_row[j] += static_cast<double>(sum);
     }
   });
 }
